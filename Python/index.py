@@ -1,10 +1,30 @@
 import tensorflow as tf
 import numpy as np
+from LogisticRegression import LogisticRegression
 
-(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
+def load_data():
+    (train_features, train_labels), (test_features, test_labels) = tf.keras.datasets.mnist.load_data()
 
-# Rescale the images from [0,255] to the [0.0,1.0] range.
-x_train, x_test = x_train[..., np.newaxis]/255.0, x_test[..., np.newaxis]/255.0
+    #flatten 3 dimensions into 2
+    train_features = list(map(lambda matrix: np.array(matrix).flatten().tolist(), train_features))
 
-print("Number of original training examples:", len(x_train))
-print("Number of original test examples:", len(x_test))
+    #encode labels
+    def encode(label):
+        encoded_label = [0] * 10
+        encoded_label[label] = 1
+        return encoded_label
+    train_labels = list(map(encode, train_labels))
+
+    return train_features, train_labels, test_features, test_labels
+
+#load_data returns a numpy array
+training_data, training_labels, testing_features, testing_labels = load_data()
+
+training_data = tf.convert_to_tensor(training_data, dtype=tf.float32)
+training_labels = tf.convert_to_tensor(training_labels, dtype=tf.float32)
+
+regression = LogisticRegression(training_data, training_labels, learning_rate=1, iterations=80, batchsize=500)
+regression.train()
+
+accuracy = regression.test(testing_features, testing_labels)
+print(accuracy)
