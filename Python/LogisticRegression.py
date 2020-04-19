@@ -1,13 +1,16 @@
 import tensorflow as tf
 import numpy as np
+from PIL import Image
 
 class LogisticRegression:
     def __init__(self, features, labels, learning_rate=0.1, iterations=50, batchsize=500):
-        if (not isinstance(features, tf.Tensor) or not isinstance(labels, tf.Tensor)):
-            raise TypeError("Both Features and Labels must be tensors")
+        # initialization of standard variables
+        self.mean = None
+        self.variance = None
 
-        self.features = features
-        self.labels = labels
+        # import data
+        self.features = self.process_features(features)
+        self.labels = tf.cast(tf.Variable(labels), tf.dtypes.float32)
 
         #options
         self.learning_rate = learning_rate
@@ -16,6 +19,7 @@ class LogisticRegression:
 
         self.weights = tf.zeros((np.shape(self.features)[1], np.shape(self.labels)[1]), tf.dtypes.float32)
         self.cost_history = []
+
 
     def gradient_descent(self, features, labels):
         current_guesses = tf.linalg.matmul(features, self.weights);
@@ -49,8 +53,21 @@ class LogisticRegression:
             self.update_learning_rate()
             i += 1
 
-    def test(testFeatures, testLabels):
-        
+    def test(self, testFeatures, testLabels):
+        predictions = self.predict(testFeatures);
+        testLabels = tf.math.argmax(testLabels, 1)
+
+        incorrect = tf.math.not_equal(predictions, testLabels)
+        incorrect = tf.cast(incorrect, tf.dtypes.int32)
+        incorrect = tf.math.reduce_sum(incorrect)
+
+        return (tf.shape(predictions)[0] - incorrect.numpy().item(0)) / tf.shape(predictions)[0]
+
+    def predict(self, features):
+        to_return = self.process_features(features)
+        to_return = tf.linalg.matmul(to_return, self.weights)
+        to_return = tf.nn.softmax(to_return)
+        return tf.math.argmax(to_return, 1)
 
     def record_cost(self):
         guesses = tf.linalg.matmul(self.features, self.weights)
@@ -72,7 +89,7 @@ class LogisticRegression:
         cross_entropy = tf.math.divide(cross_entropy, tf.cast(tf.shape(self.features)[0], tf.dtypes.float32))
         cross_entropy = tf.math.multiply(cross_entropy, -1)
 
-        self.cost_history = [] + self.cost_history
+        self.cost_history = [cross_entropy.numpy().item(0)] + self.cost_history
 
     def update_learning_rate(self):
         if(len(self.cost_history) < 2):
@@ -82,3 +99,48 @@ class LogisticRegression:
             self.learning_rate /= 2
         else:
             self.learning_rate *= 1.05
+
+    def process_features(self, features):
+        features = tf.cast(tf.Variable(features), tf.dtypes.float32)
+
+        if((not (self.mean == None)) and (not (self.variance == None))):
+            features = tf.math.subtract(features, self.mean)
+            features = tf.math.divide(features, tf.math.pow(self.variance, 0.5))
+        else:
+            features = self.standardize(features)
+
+        to_return = tf.ones([tf.shape(features)[0], 1])
+        to_return = tf.concat([to_return, features], 1)
+
+        return to_return
+
+    def standardize(self, features):
+        mean, variance = tf.nn.moments(features, 0)
+        mean = tf.cast(mean, tf.dtypes.float32)
+        variance = tf.cast(variance, tf.dtypes.float32)
+
+        filler = tf.cast(variance, tf.dtypes.bool)
+        filler = tf.math.logical_not(filler)
+        filler = tf.cast(filler, tf.dtypes.float32)
+
+        self.mean = mean
+        self.variance = tf.math.add(variance, filler)
+
+        to_return = tf.math.subtract(features, mean)
+        return tf.math.divide(to_return, tf.math.pow(self.variance, 0.5))
+
+    @staticmethod
+    def flatten_matrix(matrix):
+        return list(map(lambda mat: np.array(mat).flatten().tolist(), matrix))
+
+    @staticmethod
+    def matrify_image(image_path):
+        image = Image.open(image_path).convert('LA')
+        return array(image)
+
+    @staticmethod
+    def static_predict(weights, features):
+        to_return = self.process_features(features)
+        to_return = tf.linalg.matmul(to_return, weights)
+        to_return = tf.nn.softmax(to_return)
+        return tf.math.argmax(to_return, 1)
