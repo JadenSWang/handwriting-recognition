@@ -20,7 +20,6 @@ class LogisticRegression:
         self.weights = tf.zeros((np.shape(self.features)[1], np.shape(self.labels)[1]), tf.dtypes.float32)
         self.cost_history = []
 
-
     def gradient_descent(self, features, labels):
         current_guesses = tf.linalg.matmul(features, self.weights);
         current_guesses = tf.nn.softmax(current_guesses)
@@ -135,12 +134,42 @@ class LogisticRegression:
 
     @staticmethod
     def matrify_image(image_path):
-        image = Image.open(image_path).convert('LA')
-        return array(image)
+        img = Image.open(image_path)
+        # img = list(img.getdata())
+        # def convert_rgb(arr):
+        #     return (arr[0] + arr[1] + arr[2]) / 3
+        # img = list(map(convert_rgb, img))
+
+        return img
 
     @staticmethod
-    def static_predict(weights, features):
-        to_return = self.process_features(features)
+    def static_predict(weights, feature):
+        to_return = LogisticRegression.static_process_feature(feature)
         to_return = tf.linalg.matmul(to_return, weights)
         to_return = tf.nn.softmax(to_return)
         return tf.math.argmax(to_return, 1)
+
+    @staticmethod
+    def static_process_feature(feature):
+        feature = tf.cast(tf.Variable(feature), tf.dtypes.float32)
+        feature = LogisticRegression.static_standardize(feature)
+
+        to_return = tf.ones([tf.shape(feature)[0], 1])
+        to_return = tf.concat([to_return, feature], 1)
+
+        return to_return
+
+    @staticmethod
+    def static_standardize(feature):
+        mean, variance = tf.nn.moments(feature, 0)
+        mean = tf.cast(mean, tf.dtypes.float32)
+        variance = tf.cast(variance, tf.dtypes.float32)
+
+        filler = tf.cast(variance, tf.dtypes.bool)
+        filler = tf.math.logical_not(filler)
+        filler = tf.cast(filler, tf.dtypes.float32)
+
+        variance = tf.math.add(variance, filler)
+
+        to_return = tf.math.subtract(feature, mean)
+        return tf.math.divide(to_return, tf.math.pow(variance, 0.5))
