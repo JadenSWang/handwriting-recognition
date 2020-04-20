@@ -29,6 +29,7 @@ regression = LogisticRegression(training_data, training_labels, learning_rate=1,
 regression.train()
 
 accuracy = regression.test(testing_features, testing_labels).numpy().tolist()
+accuracy = regression.test([testing_features[0]], [testing_labels[0]]).numpy().tolist()
 
 # store data as json
 data = {}

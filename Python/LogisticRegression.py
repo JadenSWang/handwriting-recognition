@@ -20,6 +20,10 @@ class LogisticRegression:
         self.weights = tf.zeros((np.shape(self.features)[1], np.shape(self.labels)[1]), tf.dtypes.float32)
         self.cost_history = []
 
+    # def __init__(self, weights):
+    #     # initialization of standard variables
+    #     self.weights = weights
+
     def gradient_descent(self, features, labels):
         current_guesses = tf.linalg.matmul(features, self.weights);
         current_guesses = tf.nn.softmax(current_guesses)
@@ -54,6 +58,7 @@ class LogisticRegression:
 
     def test(self, testFeatures, testLabels):
         predictions = self.predict(testFeatures);
+        print(predictions)
         testLabels = tf.math.argmax(testLabels, 1)
 
         incorrect = tf.math.not_equal(predictions, testLabels)
@@ -134,11 +139,8 @@ class LogisticRegression:
 
     @staticmethod
     def matrify_image(image_path):
-        img = Image.open(image_path)
-        # img = list(img.getdata())
-        # def convert_rgb(arr):
-        #     return (arr[0] + arr[1] + arr[2]) / 3
-        # img = list(map(convert_rgb, img))
+        img = Image.open(image_path).convert('L')
+        img = np.array(img)
 
         return img
 
@@ -162,6 +164,7 @@ class LogisticRegression:
     @staticmethod
     def static_standardize(feature):
         mean, variance = tf.nn.moments(feature, 0)
+        print(feature[0])
         mean = tf.cast(mean, tf.dtypes.float32)
         variance = tf.cast(variance, tf.dtypes.float32)
 
