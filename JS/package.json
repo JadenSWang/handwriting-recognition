@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/JadenSWang/handwriting-recognition#readme",
   "dependencies": {
-    "@tensorflow/tfjs-node": "^1.7.2",
-    "@tensorflow/tfjs-node-gpu": "^1.7.2"
+    "@tensorflow/tfjs-node": "^4.8.0",
+    "@tensorflow/tfjs-node-gpu": "^4.8.0"
   }
 }
